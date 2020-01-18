@@ -7,9 +7,9 @@ namespace FilesBackup.Domain
     {
         Task<StorageContent> GetContent();
 
-        Stream GetFile(File file);
+        Stream GetFileContent(File file);
 
-        Task SaveFileAsync(File file, Stream stream);
+        Task SaveFileAsync(File file, Stream content);
 
         long GetAvailableSpace();
     }
