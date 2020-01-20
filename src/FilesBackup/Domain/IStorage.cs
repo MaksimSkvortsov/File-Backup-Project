@@ -5,7 +5,7 @@ namespace FilesBackup.Domain
 {
     public interface IStorage
     {
-        Task<StorageContent> GetContent();
+        Task<StorageContent> GetContentAsync();
 
         Stream GetFileContent(File file);
 
