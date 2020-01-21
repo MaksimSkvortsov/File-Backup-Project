@@ -28,7 +28,7 @@ namespace FilesBackup.Tests
             Directory.CreateDirectory(directoryPath);
         }
 
-        public void AddFile(string name)
+        public string AddFile(string name)
         {
             var filePath = Path.Combine(StoragePath, name);
 
@@ -42,6 +42,8 @@ namespace FilesBackup.Tests
             }
 
             using (var fileStream = File.Create(filePath)) { }
+
+            return filePath;
         }
 
         public bool FileExists(string relativeFilePath)

@@ -4,13 +4,14 @@ using FilesBackup.Utils;
 using System;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
 
 namespace FilesBackup.Infrastructure
 {
     public class WindowsFileStorage : IStorage
-    { 
-        private readonly string _path; 
+    {
+        private readonly string _path;
 
 
         public WindowsFileStorage(string path)
@@ -37,7 +38,7 @@ namespace FilesBackup.Infrastructure
             catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException)
             {
                 throw new StorageAccessFailedException("Drive is not availalbe", ex);
-            }            
+            }
         }
 
         public Task<StorageContent> GetContentAsync()
@@ -60,17 +61,57 @@ namespace FilesBackup.Infrastructure
                 throw new ArgumentException("File does not exist in the storage");
             return ReadFile(filePath);
         }
+        
+        public async Task SaveFileAsync(Domain.File file, Stream content)
+        {
+            Assert.NotNull(file, nameof(file));
+            Assert.NotNull(content, nameof(content));
+
+            var destinationFilePath = Path.Combine(_path, file.Path);
+            EnsureDirectoryExists(destinationFilePath);
+            await SaveFile(destinationFilePath, content);
+        }
+
 
         private static Stream ReadFile(string filePath)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return new FileStream(filePath, FileMode.Open);
+            }
+            catch (Exception ex) when //ToDo: find out which exceptions need to be handled as well
+            (ex is IOException
+            || ex is UnauthorizedAccessException
+            || ex is SecurityException)
+            {
+                throw new FileAccessFailedException("Failed to create FileStream", ex);
+            };
         }
 
-        public async Task SaveFileAsync(Domain.File file, Stream content)
+        private async Task SaveFile(string filePath, Stream stream)
         {
-            throw new NotImplementedException();
+            Stream destination = null;
+
+            try
+            {
+                destination = System.IO.File.Create(filePath);
+                await stream.CopyToAsync(destination);
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException || ex is IOException || ex is UnauthorizedAccessException)
+            {
+                throw new FileAccessFailedException("Failed to copy file content", ex);
+            }
+            finally
+            {
+                destination?.Dispose();
+            }
         }
 
+        private void EnsureDirectoryExists(string destinationFilePath)
+        {
+            var destinationDirectory = Path.GetDirectoryName(destinationFilePath);
+            Directory.CreateDirectory(destinationDirectory);
+        }
 
         private Domain.File ReadFileInfo(string filePath)
         {

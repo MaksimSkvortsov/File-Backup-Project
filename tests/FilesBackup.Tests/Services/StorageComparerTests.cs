@@ -1,6 +1,4 @@
-﻿using FilesBackup.Domain;
-using FilesBackup.Services;
-using System.Collections.Generic;
+﻿using FilesBackup.Services;
 using System.Linq;
 using Xunit;
 
